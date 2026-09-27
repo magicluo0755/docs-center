@@ -1,0 +1,85 @@
+# Crowdin 翻译流水线配置（Docusaurus i18n 集成）
+#
+# 使用前提（接入真实流水线时一次性配置，不进 Git）：
+#   1. 在 Crowdin 创建项目，语言目标：English(en)、繁體中文(zh-TW，经下方
+#      language_mapping 映射到 Docusaurus 的 zh-Hant 目录)
+#   2. CI 环境变量：CROWDIN_PROJECT_ID / CROWDIN_PERSONAL_TOKEN
+#   3. 主题字符串同步前先在本地执行一次：
+#        npx docusaurus write-translations --locale zh-Hans
+#      生成 i18n/zh-Hans/*.json 作为 Crowdin 源
+#   4. 翻译完成后由 crowdin download 回填 i18n/<locale>/，再执行 npm run build
+#
+# 说明：
+#   - 本项目为多实例 docs（9 个插件 id），Crowdin 占位符无法从通配符回填
+#     插件 id，故逐产品显式枚举源/目标路径（新增产品时同步追加）
+#   - zh-Hant 目前由 scripts/generate_hant.py（OpenCC）派生；接入 Crowdin 后
+#     由人工翻译质量接管，该脚本可保留为兜底/快速初始化手段
+
+project_id_env: CROWDIN_PROJECT_ID
+api_token_env: CROWDIN_PERSONAL_TOKEN
+base_path: "."
+base_url: "https://api.crowdin.com"
+preserve_hierarchy: true
+
+# Crowdin 语言代码 → Docusaurus locale 目录
+language_mapping:
+  zh-TW:
+    two_letters_code: zh-Hant
+  en:
+    two_letters_code: en
+
+files:
+  # ── 文档正文：当前版本（V2.0），9 产品 ─────────────────────
+  - source: /products/aas/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-aas/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+  - source: /products/admq/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-admq/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+  - source: /products/adc/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-adc/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+  - source: /products/alb/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-alb/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+  - source: /products/amdm/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-amdm/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+  - source: /products/adgp/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-adgp/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+  - source: /products/aig/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-aig/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+  - source: /products/akm/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-akm/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+  - source: /products/amem/docs/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-amem/current/**/%original_file_name%
+    ignore: [/products/*/sidebars.ts]
+
+  # ── 文档正文：冻结版本（V1.0），9 产品 ─────────────────────
+  - source: /aas_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-aas/version-1.0/**/%original_file_name%
+  - source: /admq_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-admq/version-1.0/**/%original_file_name%
+  - source: /adc_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-adc/version-1.0/**/%original_file_name%
+  - source: /alb_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-alb/version-1.0/**/%original_file_name%
+  - source: /amdm_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-amdm/version-1.0/**/%original_file_name%
+  - source: /adgp_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-adgp/version-1.0/**/%original_file_name%
+  - source: /aig_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-aig/version-1.0/**/%original_file_name%
+  - source: /akm_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-akm/version-1.0/**/%original_file_name%
+  - source: /amem_versioned_docs/version-1.0/**/*.md
+    translation: /i18n/%two_letters_code%/docusaurus-plugin-content-docs-amem/version-1.0/**/%original_file_name%
+
+  # ── 主题/插件字符串（导航栏、搜索面板、主题 UI）────────────
+  # 源由 `npx docusaurus write-translations --locale zh-Hans` 生成；
+  # code.json（搜索面板等代码翻译）与 navbar.json 一并纳入翻译范围
+  - source: /i18n/zh-Hans/**/*.json
+    translation: /i18n/%two_letters_code%/**/%original_file_name%

@@ -1,0 +1,29 @@
+# 企业产品术语白名单（Vocab/Apusic/accept）
+# Vale 拼写检查时不对下列术语报警；新增产品/特性术语请同步在此登记
+AAS
+ADMQ
+ADC
+ALB
+AMDM
+ADGP
+AIG
+AKM
+AMEM
+Apusic
+Paged.js
+OpenCC
+Crowdin
+Vale
+信创
+中间件
+应用服务器
+分布式消息队列
+分布式缓存
+负载均衡器
+主数据管理
+数据治理平台
+AI 网关
+知识库平台
+记忆平台
+毕昇
+金蝶天燕

@@ -1,0 +1,39 @@
+# Apusic 文档中心 Markdown 规范门禁
+# 适配 Docusaurus/MDX：关闭与前端语法冲突的规则
+
+default: true
+
+# MDX/JSX 与中英文混排场景关闭
+line-length: false
+no-inline-html: false
+single-title: false
+first-line-heading: false
+code-block-style: false
+link-image-reference-definitions: false
+
+# 统一风格
+headings-style:
+  style: atx
+ul-style:
+  style: dash
+ol-prefix:
+  style: one
+hr-style:
+  style: ---
+emphasis-style:
+  style: underscore
+strong-style:
+  style: asterisk
+
+# 链接与引用完整性
+links-style:
+  style: inline
+
+# fenced code 必须标注语言（信息映射用）
+fenced-code-language:
+  style: fenced
+
+# 表格/列表前后需空行，保证渲染稳定
+blanks-around-lists: true
+blanks-around-tables: true
+blanks-around-fences: true

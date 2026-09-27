@@ -1,0 +1,13 @@
+{
+  "$comment": "PDF 封面与公共前置页全局配置。logo 为相对 docs-center 根目录的路径（官方 APUSIC-LOGO-图文组合-横式，已裁透明边：static/img/apusic-logo-horizontal.png）；subtitle 可为空字符串隐藏。",
+  "company": { "zh-Hans": "金蝶天燕", "zh-Hant": "金蝶天燕", "en": "Apusic" },
+  "logo": "static/img/apusic-logo-horizontal.png",
+  "subtitle": {
+    "zh-Hans": "安装、配置与使用最佳实践",
+    "zh-Hant": "安裝、配置與使用最佳實踐",
+    "en": "Install, configure, and operate with best practices"
+  },
+  "dateLabel": { "zh-Hans": "发布日期", "zh-Hant": "發佈日期", "en": "Last Updated" },
+  "classification": { "zh-Hans": "内部公开", "zh-Hant": "內部公開", "en": "Internal" },
+  "showClassification": false
+}

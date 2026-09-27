@@ -1,0 +1,51 @@
+{
+  "name": "apusic-docs-center",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Apusic 产品文档中心原型：多产品 · 多版本 · 多语言 · 自动 PDF",
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "build:en": "docusaurus build --locale en",
+    "serve": "docusaurus serve",
+    "serve:static": "node scripts/serve-static.js",
+    "pdf": "node scripts/pdf/generate.js",
+    "pdf:all": "node scripts/pdf/release-all.js",
+    "clear": "docusaurus clear",
+    "gen:docs": "python scripts/generate_docs.py",
+    "gen:hant": "python scripts/generate_hant.py",
+    "verify": "bash scripts/regression.sh"
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.7.0",
+    "@docusaurus/preset-classic": "^3.7.0",
+    "@easyops-cn/docusaurus-search-local": "^0.55.3",
+    "cheerio": "^1.2.0",
+    "pagedjs": "^0.4.3",
+    "puppeteer-core": "^25.12.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "^3.7.0",
+    "@docusaurus/tsconfig": "^3.7.0",
+    "@docusaurus/types": "^3.7.0",
+    "typescript": "^5.6.3"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 3 chrome version",
+      "last 5 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "title": {
+    "message": "產品文檔中心"
+  },
+  "logo.alt": {
+    "message": "Apusic"
+  },
+  "item.label.首页": {
+    "message": "首頁"
+  },
+  "item.label.中间件": {
+    "message": "中間件"
+  },
+  "item.label.数据治理": {
+    "message": "數據治理"
+  },
+  "item.label.AI 平台": {
+    "message": "AI 平臺"
+  },
+  "item.label.金蝶Apusic应用服务器": {
+    "message": "金蝶Apusic應用服務器"
+  },
+  "item.label.金蝶Apusic分布式消息队列": {
+    "message": "金蝶Apusic分佈式消息隊列"
+  },
+  "item.label.金蝶Apusic分布式缓存": {
+    "message": "金蝶Apusic分佈式緩存"
+  },
+  "item.label.金蝶Apusic负载均衡器": {
+    "message": "金蝶Apusic負載均衡器"
+  },
+  "item.label.金蝶Apusic主数据管理": {
+    "message": "金蝶Apusic主數據管理"
+  },
+  "item.label.金蝶Apusic数据治理平台": {
+    "message": "金蝶Apusic數據治理平臺"
+  },
+  "item.label.金蝶Apusic AI 网关": {
+    "message": "金蝶Apusic AI 網關"
+  },
+  "item.label.金蝶Apusic知识库平台": {
+    "message": "金蝶Apusic知識庫平臺"
+  },
+  "item.label.金蝶Apusic记忆平台": {
+    "message": "金蝶Apusic記憶平臺"
+  }
+}

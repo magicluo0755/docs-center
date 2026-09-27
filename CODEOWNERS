@@ -1,0 +1,37 @@
+# 按产品线划分配审权（CODEOWNERS）
+# 修改对应目录的 MR 自动指派给产品线文档负责人评审
+
+# 平台层：站点配置 / 门户首页 / PDF 管线 —— 文档平台组
+/docusaurus.config.ts            @docs-platform
+/package.json                    @docs-platform
+/scripts/pdf/                    @docs-platform
+/src/                            @docs-platform
+/deploy/                         @docs-platform
+/.gitlab-ci.yml                  @docs-platform
+
+# 中间件产品线
+/products/aas/                   @middleware-docs
+/products/admq/                  @middleware-docs
+/products/adc/                   @middleware-docs
+/products/alb/                   @middleware-docs
+/aas_versioned_docs/             @middleware-docs @docs-platform
+/admq_versioned_docs/            @middleware-docs @docs-platform
+/adc_versioned_docs/             @middleware-docs @docs-platform
+/alb_versioned_docs/             @middleware-docs @docs-platform
+
+# 数据治理产品线
+/products/amdm/                  @data-governance-docs
+/products/adgp/                  @data-governance-docs
+/amdm_versioned_docs/            @data-governance-docs @docs-platform
+/adgp_versioned_docs/            @data-governance-docs @docs-platform
+
+# AI 平台产品线
+/products/aig/                   @ai-platform-docs
+/products/akm/                   @ai-platform-docs
+/products/amem/                  @ai-platform-docs
+/aig_versioned_docs/             @ai-platform-docs @docs-platform
+/akm_versioned_docs/             @ai-platform-docs @docs-platform
+/amem_versioned_docs/            @ai-platform-docs @docs-platform
+
+# 本地化组：英文翻译全局
+/i18n/en/                        @localization

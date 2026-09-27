@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 56" width="260" height="56">
+  <!-- 横版组合标：图标 + 公司字标（封面/页眉用，可整体替换为企业 VI 标识） -->
+  <rect x="2" y="4" width="48" height="48" rx="10" fill="#2e5fd8"/>
+  <path d="M14 37 L26 15 L38 37" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="19" y1="29" x2="33" y2="29" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <text x="64" y="30" font-family="'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="24" font-weight="700" fill="#1c1e21" letter-spacing="4">APUSIC</text>
+  <text x="64" y="49" font-family="'Microsoft YaHei', sans-serif" font-size="12" fill="#57606a" letter-spacing="6">金蝶天燕</text>
+</svg>

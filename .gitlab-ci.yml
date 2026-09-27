@@ -1,0 +1,107 @@
+# Apusic 文档中心 CI/CD（GitLab CI）
+# 阶段：质量门禁 → 站点构建 → PDF 出稿 → 部署
+# 说明：PDF 任务按 产品×版本×语言 矩阵抽样/全量出稿，产物入制品库
+
+stages:
+  - lint
+  - build
+  - pdf
+  - deploy
+
+variables:
+  NODE_VERSION: "22"
+  # PDF 出稿矩阵：发版时全量，日常 MR 抽样（通过变量控制）
+  PDF_PRODUCTS: "aas admq adc alb amdm adgp aig akm amem"
+  PDF_LANGS: "zh-Hans en"
+
+default:
+  image: node:${NODE_VERSION}
+  cache:
+    key:
+      files:
+        - package.json
+    paths:
+      - .npm/
+      - node_modules/
+  before_script:
+    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+
+# ─── 质量门禁：Markdown 规范 + 死链检查 ─────────────────────
+lint:markdown:
+  stage: lint
+  script:
+    - npx markdownlint-cli2 "**/*.md" "#node_modules" "#build" "#output"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# ─── 站点构建（中文 + 英文）────────────────────────────────
+build:site:
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    name: "site-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - build/
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# ─── MR 抽样 PDF：验证管线不回归（仅 AAS 中文 V2.0）─────────
+pdf:sample:
+  stage: pdf
+  needs: ["build:site"]
+  image: ghcr.io/puppeteer/puppeteer:latest  # 含 Chromium；自建 runner 可替换为公司标准镜像
+  variables:
+    PUPPETEER_SKIP_DOWNLOAD: "1"
+  script:
+    - npx docusaurus serve --port 3000 & sleep 5
+    - node scripts/pdf/generate.js --product aas --version current --lang zh-Hans
+  artifacts:
+    paths:
+      - output/pdf/
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# ─── 发版全量 PDF：产品 × 版本 × 语言 全矩阵出稿 ─────────────
+pdf:release:
+  stage: pdf
+  needs: ["build:site"]
+  image: ghcr.io/puppeteer/puppeteer:latest
+  variables:
+    PUPPETEER_SKIP_DOWNLOAD: "1"
+  script:
+    - npx docusaurus serve --port 3000 & sleep 5
+    - |
+      for p in $PDF_PRODUCTS; do
+        for l in $PDF_LANGS; do
+          node scripts/pdf/generate.js --product "$p" --version current --lang "$l" || exit 1
+        done
+      done
+  artifacts:
+    name: "pdf-${CI_COMMIT_TAG:-dev}"
+    paths:
+      - output/pdf/
+    expire_in: never   # 发版 PDF 长期归档（生产建议转推 Nexus/对象存储）
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/   # 打 tag 即发版
+
+# ─── 部署：推送到内网静态托管（示例：rsync 到 Nginx 主机）────
+deploy:site:
+  stage: deploy
+  needs: ["build:site"]
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache rsync openssh-client
+  script:
+    # 生产建议改用公司发布系统；此处为最小可用示例
+    - rsync -az --delete build/ "${DEPLOY_USER}@${DEPLOY_HOST}:/srv/docs-center/"
+  environment:
+    name: production
+    url: http://docs.example.apusic.internal
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
