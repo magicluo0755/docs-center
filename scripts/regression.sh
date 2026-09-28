@@ -56,19 +56,9 @@ for loc in "" "zh-Hant/" "en/"; do
   [ "$files" -eq 10 ] && ok "$name 10/10 索引" || bad "$name 仅 $files/10 索引"
 done
 
-# ── 3. PDF 库存：全量 54 份 + manuals.json 分册（每册 3 语言 × 2 版本）──
+# ── 3. PDF 库存：全量 + manuals.json 分册，按 i18n 翻译覆盖动态计算（缺失语言跳过）──
 step "PDF 库存"
-expected=$(node -e "
-const m=require('./scripts/pdf/manuals.json');
-let n=54;
-for(const e of Object.values(m||{})){
-  for(const v of ['current','1.0']){
-    const list=(((e.versions||{})[v]||{}).manuals)||e.manuals||[];
-    n+=list.length*3;
-  }
-}
-console.log(n);
-" 2>/dev/null || echo 54)
+expected=$(node -e "console.log(require('./scripts/pdf/lang-coverage.js').expectedPdfCount())" 2>/dev/null || echo 54)
 cnt=$(find output/pdf -name "*.pdf" ! -name "*updated*" ! -name "*tmp*" | wc -l)
 [ "$cnt" -eq "$expected" ] && ok "${expected} 份齐" || bad "实有 $cnt 份（期望 ${expected}）"
 miss=0

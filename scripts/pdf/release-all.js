@@ -5,13 +5,8 @@
 const {spawnSync} = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const {LANGS, PRODUCTS, availableLangs} = require("./lang-coverage");
 
-const PRODUCTS = [
-  "aas", "admq", "adc", "alb",
-  "amdm", "adgp",
-  "aig", "akm", "amem",
-];
-const LANGS = ["zh-Hans", "zh-Hant", "en"];
 const VERSIONS = ["current", "1.0"]; // current = V2.0；1.0 = 冻结版 V1.0
 
 // 手册清单：产品级 manuals 生效于所有版本；versions[<version>].manuals 整体覆盖
@@ -27,6 +22,7 @@ function manualsFor(product, version) {
 
 let failed = 0;
 let done = 0;
+let skipped = 0;
 function run(extraArgs, tag) {
   const r = spawnSync(
     process.execPath,
@@ -44,7 +40,14 @@ function run(extraArgs, tag) {
 
 for (const version of VERSIONS) {
   for (const product of PRODUCTS) {
+    // 缺失翻译的语言整组跳过（与 generate.js 内的跳过检查同源判定）
+    const langs = availableLangs(product, version);
     for (const lang of LANGS) {
+      if (!langs.includes(lang)) {
+        console.log(`SKIP ${product}/${version}/${lang}: 翻译缺失（i18n 目录无 md），不出稿`);
+        skipped++;
+        continue;
+      }
       const common = ["--product", product, "--version", version, "--lang", lang];
       run(common, `${product}/${version}/${lang}/full`);
       for (const m of manualsFor(product, version)) {
@@ -55,6 +58,6 @@ for (const version of VERSIONS) {
 }
 
 console.log(failed === 0
-  ? `\nAll ${done} PDFs generated successfully.`
+  ? `\nAll ${done} PDFs generated successfully${skipped ? `，${skipped} 个组合因翻译缺失跳过` : ""}.`
   : `\n${failed}/${done} PDF generation(s) failed.`);
 process.exit(failed === 0 ? 0 : 1);

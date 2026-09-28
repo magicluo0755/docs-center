@@ -7,8 +7,8 @@
   - products/<id>/docs/*.md                 → i18n/zh-Hant/docusaurus-plugin-content-docs-<id>/current/
   - <id>_versioned_docs/version-1.0/*.md    → i18n/zh-Hant/docusaurus-plugin-content-docs-<id>/version-1.0/
 
-幂等可重复执行：每次全量重建 zh-Hant 目录（先清空后写入），
-简体源文件始终为唯一事实来源（single source of truth）。
+幂等可重复执行：按产品逐个清理重建（带产品参数时只重建指定产品，
+不影响其他产品既有繁体文档），简体源文件始终为唯一事实来源（single source of truth）。
 
 用法：
   python scripts/generate_hant.py          # 转换全部产品
@@ -65,9 +65,13 @@ def main() -> None:
     if unknown:
         sys.exit(f"unknown products: {unknown}")
 
-    # 清空重建，保证与简体源完全同步
-    if I18N_HANT.exists():
-        shutil.rmtree(I18N_HANT)
+    # 逐产品清理重建（保证指定产品与简体源完全同步，且不误删未指定产品的既有翻译。
+    # 2026-09-29 修复：此前整体 rmtree i18n/zh-Hant，带产品参数运行时会清掉其余产品繁体文档，
+    # 导致那些产品在站点上静默回退渲染简体内容）
+    for pid in targets:
+        plugin_dir = I18N_HANT / (PLUGIN_DIR_PREFIX + pid)
+        if plugin_dir.exists():
+            shutil.rmtree(plugin_dir)
 
     total = 0
     for pid in targets:

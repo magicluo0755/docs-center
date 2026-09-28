@@ -45,6 +45,17 @@ const COVER_CONFIG = (() => {
   return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "utf8")) : {};
 })();
 
+// ─── 缺失翻译自动跳过（真实场景：个别产品/版本仅有简体中文）────
+// 站点侧 Docusaurus 原生回退渲染简体内容；PDF 侧按约定跳过该语言出稿。
+const {hasTranslation} = require("./lang-coverage");
+if (!hasTranslation(PRODUCT, VERSION, LANG)) {
+  console.log(
+    `[SKIP] ${PRODUCT}/${VERSION} 无 ${LANG} 翻译（i18n 目录无 md 文件），跳过 PDF 出稿。\n` +
+    `       站点侧该语言将回退渲染简体中文；翻译交付后重跑本命令即自动出稿。`
+  );
+  process.exit(0);
+}
+
 // ─── 分册手册清单（需求：按手册自由组合 md 出 PDF）──────────
 const MANUALS = (() => {
   const p = path.join(__dirname, "manuals.json");
