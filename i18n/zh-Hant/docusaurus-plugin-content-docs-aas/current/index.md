@@ -12,7 +12,7 @@ title: 產品首頁
 |------|------|
 | [產品簡介](./intro.md) | 產品定位、核心特性與應用場景 |
 | [快速開始](./quick-start.md) | 10 分鐘完成首次部署與體驗 |
-| [安裝手冊](./installation.md) | 生產級部署與集羣安裝 |
+| [安裝手冊](./installation/index.md) | 生產級部署與集羣安裝 |
 | [使用手冊](./usage.md) | 控制檯操作與核心功能使用 |
 | [配置手冊](./configuration.md) | 配置文件與核心參數說明 |
 | [開發手冊](./development.md) | API 與 SDK 集成開發 |

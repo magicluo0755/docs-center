@@ -140,6 +140,11 @@ def fm(pos, title):
     return "---\nsidebar_position: %d\ntitle: %s\n---\n" % (pos, title)
 
 
+def inst_link(p):
+    """安装手册相对链接：AAS 已目录化（installation/index.md），其余产品仍为扁平单文件"""
+    return "./installation/index.md" if p["id"] == "aas" else "./installation.md"
+
+
 # ══════════════════════════ 简体中文模板 ══════════════════════════
 
 def index_zh(p):
@@ -154,7 +159,7 @@ def index_zh(p):
 |------|------|
 | [产品简介](./intro.md) | 产品定位、核心特性与应用场景 |
 | [快速开始](./quick-start.md) | 10 分钟完成首次部署与体验 |
-| [安装手册](./installation.md) | 生产级部署与集群安装 |
+| [安装手册]({inst_link(p)}) | 生产级部署与集群安装 |
 | [使用手册](./usage.md) | 控制台操作与核心功能使用 |
 | [配置手册](./configuration.md) | 配置文件与核心参数说明 |
 | [开发手册](./development.md) | API 与 SDK 集成开发 |
@@ -196,7 +201,7 @@ def intro_zh(p):
 | 文档 | 说明 |
 |------|------|
 | [快速开始](./quick-start.md) | 10 分钟完成首次部署与体验 |
-| [安装手册](./installation.md) | 生产级部署与集群安装 |
+| [安装手册]({inst_link(p)}) | 生产级部署与集群安装 |
 | [使用手册](./usage.md) | 控制台操作与核心功能使用 |
 | [配置手册](./configuration.md) | 配置文件与核心参数说明 |
 | [开发手册](./development.md) | API 与 SDK 集成开发 |
@@ -251,7 +256,7 @@ http://localhost:{p['port']}/console
 默认管理员账号：`admin`，初始密码在首次启动日志 `logs/init.log` 中查看。
 
 :::tip 下一步
-- 参考[安装手册](./installation.md)完成生产级部署与集群配置
+- 参考[安装手册]({inst_link(p)})完成生产级部署与集群配置
 - 参考[配置手册](./configuration.md)了解核心参数
 :::
 """
@@ -317,6 +322,134 @@ cd /opt/apusic/{p['id']}/bin
 
 - 验证：执行 `./{p['id']} status` 与 `curl http://localhost:{p['port']}/health`
 - 卸载：先执行 `./{p['id']} stop`，再删除安装目录（数据目录请按合规要求归档）
+"""
+
+
+# ── AAS 安装指南目录树（业界组织：手册=目录，index 为 landing，子目录=编 Part）──
+
+def installation_index_zh(p):
+    return fm(1, "安装指南") + f"""# 安装指南
+
+本指南覆盖 {p['full_zh']}（{p['abbr']}）生产级部署的全流程。开始安装前，请先根据业务场景选择部署形态。
+
+## 部署形态选择
+
+| 部署形态 | 适用场景 | 参考章节 |
+|---------|---------|---------|
+| 单机部署 | 开发测试环境、小规模业务系统 | [单机安装](./standalone.md) |
+| 集群部署 | 生产环境、高可用与容灾要求 | [集群安装](./cluster/nodes.md) |
+
+## 阅读路径
+
+1. 确认 [系统要求与前置条件](./prereq.md)，准备运行环境
+2. 按所选部署形态执行安装
+3. 安装完成后，参考[使用手册](../usage.md)完成控制台初始化
+
+:::warning 重要提醒
+生产环境部署前，请务必完成现有环境的配置备份，并核对安装包 SHA-256 校验值，确保介质完整。
+:::
+"""
+
+
+def installation_prereq_zh(p):
+    return fm(2, "系统要求与前置条件") + f"""# 系统要求与前置条件
+
+## 系统要求
+
+| 项目 | 最低要求 | 生产推荐 |
+|------|---------|---------|
+| 操作系统 | 麒麟 V10 / 统信 UOS / CentOS 7.6+ / RHEL 8+ | 麒麟 V10 SP3 |
+| CPU | 4 核 | 16 核 |
+| 内存 | 8 GB | 64 GB |
+| 磁盘 | 100 GB SSD | 1 TB NVMe SSD |
+| 依赖环境 | JDK 17+ | JDK 17 LTS |
+
+## 获取安装包
+
+安装包随产品发布介质提供，或通过企业制品库获取：
+
+```text
+apusic-{p['id']}-2.0.0.tar.gz        # 标准版
+apusic-{p['id']}-2.0.0-cluster.tar.gz # 集群版
+```
+
+:::warning 介质完整性
+安装前请核对安装包 SHA-256 校验值；校验不一致时禁止安装，并重新获取介质。
+:::
+"""
+
+
+def installation_standalone_zh(p):
+    return fm(3, "单机安装") + f"""# 单机安装
+
+## 标准安装步骤
+
+```bash
+# 1. 创建运行用户（禁止以 root 运行）
+useradd -r -s /sbin/nologin apusic
+
+# 2. 解压安装包
+tar -zxvf apusic-{p['id']}-2.0.0.tar.gz -C /opt/apusic/
+chown -R apusic:apusic /opt/apusic/{p['id']}
+
+# 3. 授权与导入许可
+su - apusic
+cd /opt/apusic/{p['id']}/bin
+./license.sh import /path/to/license.lic
+
+# 4. 初始化并启动
+./init.sh --silent --config=conf/install.yaml
+./{p['id']} start
+```
+
+## 验证与卸载
+
+- 验证：执行 `./{p['id']} status` 与 `curl http://localhost:{p['port']}/health`
+- 卸载：先执行 `./{p['id']} stop`，再删除安装目录（数据目录请按合规要求归档）
+"""
+
+
+def installation_nodes_zh(p):
+    return fm(1, "集群组网与节点加入") + f"""# 集群组网与节点加入
+
+多节点集群部署时，首个节点作为引导节点，其余节点通过加入引导节点完成组网：
+
+```bash
+./join-cluster.sh --seed 192.168.1.10:{p['port']} --node-ip 192.168.1.11
+```
+
+## 组网原则
+
+- 集群规模不少于 3 节点，并跨机架/跨机房分布
+- 节点间网络延迟建议低于 2ms，带宽不低于 1Gbps
+- 引导节点建议部署在独立于业务高峰的网段
+
+## 节点状态确认
+
+加入完成后，通过控制台「集群管理」页面确认各节点状态均为 Online，并检查数据分片分布是否均匀。
+"""
+
+
+def installation_ha_zh(p):
+    return fm(2, "高可用与容灾") + f"""# 高可用与容灾
+
+## 高可用架构
+
+- **节点级容错**：集群内任一节点故障，业务自动切换至存活节点，RTO < 30s
+- **接入层高可用**：前端通过负载均衡器（如 Apusic ALB）对接集群，消除单点
+- **会话复制**：开启会话复制后，节点间自动同步会话状态
+
+## 跨机房容灾
+
+生产关键业务建议采用同城双机房部署，两机房各部署不少于 2 节点，通过异地复制通道保持数据同步，RPO < 1min。
+
+## 备份与恢复
+
+| 对象 | 方式 | 建议频率 |
+|------|------|---------|
+| 配置文件 | 控制台导出 / 脚本打包 | 每日 |
+| 应用数据 | 集群快照 | 每日 + 变更前 |
+| 许可文件 | 异地存放一份副本 | 变更时 |
 """
 
 
@@ -572,7 +705,7 @@ def index_en(p):
 |----------|-------------|
 | [Product Introduction](./intro.md) | Positioning, features and use cases |
 | [Quick Start](./quick-start.md) | First deployment in 10 minutes |
-| [Installation Guide](./installation.md) | Production and cluster deployment |
+| [Installation Guide]({inst_link(p)}) | Production and cluster deployment |
 | [User Guide](./usage.md) | Console and core features |
 | [Configuration Guide](./configuration.md) | Configuration files and parameters |
 | [Developer Guide](./development.md) | API and SDK integration |
@@ -614,7 +747,7 @@ Both **V1.0** and **V2.0** documentation are maintained. Use the version switche
 | Document | Description |
 |----------|-------------|
 | [Quick Start](./quick-start.md) | First deployment in 10 minutes |
-| [Installation Guide](./installation.md) | Production and cluster deployment |
+| [Installation Guide]({inst_link(p)}) | Production and cluster deployment |
 | [User Guide](./usage.md) | Console and core features |
 | [Configuration Guide](./configuration.md) | Configuration files and parameters |
 | [Developer Guide](./development.md) | API and SDK integration |
@@ -669,7 +802,7 @@ http://localhost:{p['port']}/console
 Default administrator: `admin`. The initial password is printed to `logs/init.log` on first start.
 
 :::tip Next steps
-- See the [Installation Guide](./installation.md) for production deployment
+- See the [Installation Guide]({inst_link(p)}) for production deployment
 - See the [Configuration Guide](./configuration.md) for key parameters
 :::
 """
@@ -733,6 +866,134 @@ A minimum of 3 nodes across racks or datacenters is recommended.
 
 - Verify: `./{p['id']} status` and `curl http://localhost:{p['port']}/health`
 - Uninstall: stop the service, then remove the installation directory
+"""
+
+
+# ── AAS 安装指南目录树（英文）──
+
+def installation_index_en(p):
+    return fm(1, "Installation Guide") + f"""# Installation Guide
+
+This guide covers the full production deployment workflow of {p['full_en']} ({p['abbr']}). Choose a deployment topology before you start.
+
+## Choose a Deployment Topology
+
+| Topology | Use Case | Reference |
+|----------|----------|-----------|
+| Standalone | Development, testing, small-scale systems | [Standalone Installation](./standalone.md) |
+| Cluster | Production with HA and DR requirements | [Cluster Installation](./cluster/nodes.md) |
+
+## Reading Path
+
+1. Review [System Requirements and Prerequisites](./prereq.md) and prepare the environment
+2. Install following the chosen topology
+3. After installation, initialize the console with the [User Guide](../usage.md)
+
+:::warning Important
+Back up your environment before production installation and verify the SHA-256 checksum of the package.
+:::
+"""
+
+
+def installation_prereq_en(p):
+    return fm(2, "System Requirements and Prerequisites") + f"""# System Requirements and Prerequisites
+
+## System Requirements
+
+| Item | Minimum | Recommended |
+|------|---------|-------------|
+| OS | Kylin V10 / UOS / CentOS 7.6+ / RHEL 8+ | Kylin V10 SP3 |
+| CPU | 4 cores | 16 cores |
+| Memory | 8 GB | 64 GB |
+| Disk | 100 GB SSD | 1 TB NVMe SSD |
+| Runtime | JDK 17+ | JDK 17 LTS |
+
+## Obtaining the Package
+
+The installation package is delivered with the release media or via the enterprise artifact repository:
+
+```text
+apusic-{p['id']}-2.0.0.tar.gz         # Standard
+apusic-{p['id']}-2.0.0-cluster.tar.gz # Cluster
+```
+
+:::warning Media Integrity
+Verify the SHA-256 checksum before installation. Never install from a package whose checksum does not match.
+:::
+"""
+
+
+def installation_standalone_en(p):
+    return fm(3, "Standalone Installation") + f"""# Standalone Installation
+
+## Standard Installation Steps
+
+```bash
+# 1. Create a runtime user (do not run as root)
+useradd -r -s /sbin/nologin apusic
+
+# 2. Extract the package
+tar -zxvf apusic-{p['id']}-2.0.0.tar.gz -C /opt/apusic/
+chown -R apusic:apusic /opt/apusic/{p['id']}
+
+# 3. Grant permissions and import the license
+su - apusic
+cd /opt/apusic/{p['id']}/bin
+./license.sh import /path/to/license.lic
+
+# 4. Initialize and start
+./init.sh --silent --config=conf/install.yaml
+./{p['id']} start
+```
+
+## Verification and Uninstall
+
+- Verify: run `./{p['id']} status` and `curl http://localhost:{p['port']}/health`
+- Uninstall: run `./{p['id']} stop` first, then remove the installation directory (archive data directories per compliance requirements)
+"""
+
+
+def installation_nodes_en(p):
+    return fm(1, "Cluster Networking and Node Join") + f"""# Cluster Networking and Node Join
+
+For multi-node clusters, the first node acts as the seed node; other nodes join the cluster through it:
+
+```bash
+./join-cluster.sh --seed 192.168.1.10:{p['port']} --node-ip 192.168.1.11
+```
+
+## Networking Principles
+
+- Deploy at least 3 nodes, spread across racks or datacenters
+- Keep inter-node latency below 2ms with at least 1Gbps bandwidth
+- Place the seed node on a network segment isolated from business traffic peaks
+
+## Confirming Node Status
+
+After joining, confirm all nodes show Online on the console "Cluster Management" page and check that data shards are evenly distributed.
+"""
+
+
+def installation_ha_en(p):
+    return fm(2, "High Availability and Disaster Recovery") + f"""# High Availability and Disaster Recovery
+
+## HA Architecture
+
+- **Node-level failover**: if any node fails, workloads switch to surviving nodes automatically, RTO < 30s
+- **Access-layer HA**: front the cluster with a load balancer (e.g. Apusic ALB) to eliminate single points
+- **Session replication**: with session replication enabled, session state syncs across nodes
+
+## Cross-Datacenter DR
+
+For mission-critical workloads, deploy at least 2 nodes in each of two datacenters within the same region, with data replicated through the cross-datacenter channel, RPO < 1min.
+
+## Backup and Recovery
+
+| Object | Method | Frequency |
+|--------|--------|-----------|
+| Configuration | Console export / archive script | Daily |
+| Application data | Cluster snapshots | Daily + before changes |
+| License | Keep an off-site copy | On change |
 """
 
 
@@ -1006,6 +1267,51 @@ def navbar_json():
     return json.dumps(items, ensure_ascii=False, indent=2)
 
 
+# AAS 安装指南目录树：4 份落盘位置（当前版 / V1.0 冻结版 / 英文 current / 英文 V1.0）
+# 页面顺序由 frontmatter sidebar_position 决定；cluster 子目录经 _category_.json 成为「编（Part）」
+AAS_INSTALL_ZH = {
+    "index": installation_index_zh, "prereq": installation_prereq_zh,
+    "standalone": installation_standalone_zh,
+    "cluster/nodes": installation_nodes_zh, "cluster/ha": installation_ha_zh,
+}
+AAS_INSTALL_EN = {
+    "index": installation_index_en, "prereq": installation_prereq_en,
+    "standalone": installation_standalone_en,
+    "cluster/nodes": installation_nodes_en, "cluster/ha": installation_ha_en,
+}
+AAS_CLUSTER_CATEGORY = {"zh": {"label": "集群安装", "position": 4},
+                        "en": {"label": "Cluster Installation", "position": 4}}
+
+
+def write_aas_installation():
+    """写入 AAS 安装指南目录树（4 个落盘位置 × 5 页 + cluster/_category_.json）"""
+    n = 0
+    for lang, tpl in (("zh", AAS_INSTALL_ZH), ("en", AAS_INSTALL_EN)):
+        if lang == "zh":
+            roots = ["products/aas/docs",
+                     "aas_versioned_docs/version-1.0"]
+        else:
+            roots = ["i18n/en/docusaurus-plugin-content-docs-aas/current",
+                     "i18n/en/docusaurus-plugin-content-docs-aas/version-1.0"]
+        for root in roots:
+            for rel, fn in tpl.items():
+                w(f"{root}/installation/{rel}.md", fn(PRODUCTS[0]))
+                n += 1
+            cat = AAS_CLUSTER_CATEGORY[lang]
+            w(f"{root}/installation/cluster/_category_.json",
+              json.dumps(cat, ensure_ascii=lang == "en", indent=2) + "\n")
+            n += 1
+    # AAS 扁平 installation.md 已被目录树取代，清理残留
+    for stale in ("products/aas/docs/installation.md",
+                  "aas_versioned_docs/version-1.0/installation.md",
+                  "i18n/en/docusaurus-plugin-content-docs-aas/current/installation.md",
+                  "i18n/en/docusaurus-plugin-content-docs-aas/version-1.0/installation.md"):
+        path = os.path.join(ROOT, stale)
+        if os.path.isfile(path):
+            os.remove(path)
+    return n
+
+
 def main():
     # 清理旧版结构（历史生成的 products/<id>/versioned_docs 与 versions.json）
     for p in PRODUCTS:
@@ -1028,6 +1334,8 @@ def main():
           versioned_sidebars_json(pid))
 
         for doc_id, pos, _, _ in DOCS:
+            if pid == "aas" and doc_id == "installation":
+                continue  # AAS 安装手册已目录化，见下方 write_aas_installation
             zh_md = ZH[doc_id](p)
             en_md = EN[doc_id](p)
             # 当前版本 V2.0
@@ -1038,6 +1346,9 @@ def main():
             w(f"i18n/en/docusaurus-plugin-content-docs-{pid}/current/{doc_id}.md", en_md)
             w(f"i18n/en/docusaurus-plugin-content-docs-{pid}/version-1.0/{doc_id}.md", en_md)
             count += 4
+
+        if pid == "aas":
+            count += write_aas_installation()
 
     w("i18n/en/docusaurus-theme-classic/navbar.json", navbar_json())
     print(f"Generated {count} markdown files for {len(PRODUCTS)} products.")

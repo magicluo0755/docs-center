@@ -32,7 +32,7 @@ Application Server delivers stable, efficient and secure infrastructure capabili
 | Document | Description |
 |----------|-------------|
 | [Quick Start](./quick-start.md) | First deployment in 10 minutes |
-| [Installation Guide](./installation.md) | Production and cluster deployment |
+| [Installation Guide](./installation/index.md) | Production and cluster deployment |
 | [User Guide](./usage.md) | Console and core features |
 | [Configuration Guide](./configuration.md) | Configuration files and parameters |
 | [Developer Guide](./development.md) | API and SDK integration |

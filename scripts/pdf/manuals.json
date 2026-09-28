@@ -1,0 +1,23 @@
+{
+  "_comment": "分册 PDF 手册清单：定义「哪些 md 页面组合成哪本 PDF」。手册 = { id, title(三语), docs(有序路由 slug 列表) }；产品级 manuals 对所有版本生效，versions[<version>].manuals 可整体覆盖该版本的组合。docs 中的 slug 为站点路由最后一段（如 installation；多文件章节支持嵌套路径如 installation/cluster），页面必须已构建存在于站点中。CLI：node scripts/pdf/generate.js --product aas --version current --lang zh-Hans --manual installation-guide；不传 --manual = 全量合集（向后兼容）。",
+  "aas": {
+    "manuals": [
+      {
+        "id": "installation-guide",
+        "title": { "zh": "安装手册", "hant": "安裝手冊", "en": "Installation Guide" },
+        "docs": ["intro", { "dir": "installation" }]
+      },
+      {
+        "id": "user-guide",
+        "title": { "zh": "用户手册", "hant": "用戶手冊", "en": "User Guide" },
+        "docs": ["intro", "quick-start", "usage", "configuration"]
+      },
+      {
+        "id": "tuning-guide",
+        "title": { "zh": "调优手册", "hant": "調優手冊", "en": "Tuning Guide" },
+        "docs": ["intro", "performance", "development"]
+      }
+    ],
+    "versions": {}
+  }
+}

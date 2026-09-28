@@ -48,6 +48,6 @@ http://localhost:6888/console
 默認管理員賬號：`admin`，初始密碼在首次啓動日誌 `logs/init.log` 中查看。
 
 :::tip 下一步
-- 參考[安裝手冊](./installation.md)完成生產級部署與集羣配置
+- 參考[安裝手冊](./installation/index.md)完成生產級部署與集羣配置
 - 參考[配置手冊](./configuration.md)瞭解核心參數
 :::

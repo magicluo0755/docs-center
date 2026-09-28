@@ -1,7 +1,10 @@
 #!/usr/bin/env node
-/** 发版全量 PDF 出稿：全部产品 × 全部语言 × 全部版本（模拟 CI pdf:release 任务） */
+/** 发版全量 PDF 出稿：全部产品 × 全部语言 × 全部版本（模拟 CI pdf:release 任务）
+ *  每个组合出：全量合集 1 份 + manuals.json 中该产品定义的分册 N 份
+ *  （无分册配置的产品仅出全量，行为与历史版本一致） */
 const {spawnSync} = require("child_process");
 const path = require("path");
+const fs = require("fs");
 
 const PRODUCTS = [
   "aas", "admq", "adc", "alb",
@@ -11,20 +14,41 @@ const PRODUCTS = [
 const LANGS = ["zh-Hans", "zh-Hant", "en"];
 const VERSIONS = ["current", "1.0"]; // current = V2.0；1.0 = 冻结版 V1.0
 
+// 手册清单：产品级 manuals 生效于所有版本；versions[<version>].manuals 整体覆盖
+const MANUALS = (() => {
+  const p = path.join(__dirname, "manuals.json");
+  try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return {}; }
+})();
+function manualsFor(product, version) {
+  const e = MANUALS[product];
+  if (!e) return [];
+  return ((e.versions || {})[version] || {}).manuals || e.manuals || [];
+}
+
 let failed = 0;
 let done = 0;
+function run(extraArgs, tag) {
+  const r = spawnSync(
+    process.execPath,
+    [path.join(__dirname, "generate.js"),
+     "--base", process.env.PDF_BASE || "http://localhost:3000",
+     ...extraArgs],
+    {stdio: "inherit"}
+  );
+  done++;
+  if (r.status !== 0) {
+    console.error(`FAILED: ${tag}`);
+    failed++;
+  }
+}
+
 for (const version of VERSIONS) {
   for (const product of PRODUCTS) {
     for (const lang of LANGS) {
-      const r = spawnSync(
-        process.execPath,
-        [path.join(__dirname, "generate.js"), "--product", product, "--version", version, "--lang", lang, "--base", process.env.PDF_BASE || "http://localhost:3000"],
-        {stdio: "inherit"}
-      );
-      done++;
-      if (r.status !== 0) {
-        console.error(`FAILED: ${product}/${version}/${lang}`);
-        failed++;
+      const common = ["--product", product, "--version", version, "--lang", lang];
+      run(common, `${product}/${version}/${lang}/full`);
+      for (const m of manualsFor(product, version)) {
+        run([...common, "--manual", m.id], `${product}/${version}/${lang}/${m.id}`);
       }
     }
   }

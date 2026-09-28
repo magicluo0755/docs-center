@@ -1,6 +1,6 @@
 {
   "title": {
-    "message": "Docs Center"
+    "message": "Apusic Docs Center"
   },
   "logo.alt": {
     "message": "Apusic"
@@ -13,35 +13,5 @@
   },
   "item.label.AI 平台": {
     "message": "AI Platform"
-  },
-  "item.label.首页": {
-    "message": "Home"
-  },
-  "item.label.金蝶Apusic应用服务器": {
-    "message": "Apusic Application Server"
-  },
-  "item.label.金蝶Apusic分布式消息队列": {
-    "message": "Apusic Distributed Message Queue"
-  },
-  "item.label.金蝶Apusic分布式缓存": {
-    "message": "Apusic Memory Data in Cache"
-  },
-  "item.label.金蝶Apusic负载均衡器": {
-    "message": "Apusic Load Balancer"
-  },
-  "item.label.金蝶Apusic主数据管理": {
-    "message": "Apusic Master Data Management"
-  },
-  "item.label.金蝶Apusic数据治理平台": {
-    "message": "Apusic Data Governance Platform"
-  },
-  "item.label.金蝶Apusic AI 网关": {
-    "message": "Apusic AI Gateway"
-  },
-  "item.label.金蝶Apusic知识库平台": {
-    "message": "Apusic Knowledge Management"
-  },
-  "item.label.金蝶Apusic记忆平台": {
-    "message": "Apusic Memory Platform"
   }
 }

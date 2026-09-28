@@ -50,6 +50,9 @@ def convert_tree(src_dir: Path, dst_dir: Path) -> int:
         dst.parent.mkdir(parents=True, exist_ok=True)
         if src.suffix in {".md", ".mdx"}:
             dst.write_text(convert_text(src.read_text(encoding="utf-8")), encoding="utf-8")
+        elif src.suffix == ".json":
+            # _category_.json 等配置中的中文标签（如编名）一并转换
+            dst.write_text(convert_text(src.read_text(encoding="utf-8")), encoding="utf-8")
         else:
             shutil.copy2(src, dst)  # 非文本资源原样复制
         count += 1

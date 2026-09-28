@@ -56,10 +56,21 @@ for loc in "" "zh-Hant/" "en/"; do
   [ "$files" -eq 10 ] && ok "$name 10/10 索引" || bad "$name 仅 $files/10 索引"
 done
 
-# ── 3. PDF 库存：9 产品 × 3 语言 × 2 版本 = 54 份 ─────────────
-step "PDF 库存（54 份）"
+# ── 3. PDF 库存：全量 54 份 + manuals.json 分册（每册 3 语言 × 2 版本）──
+step "PDF 库存"
+expected=$(node -e "
+const m=require('./scripts/pdf/manuals.json');
+let n=54;
+for(const e of Object.values(m||{})){
+  for(const v of ['current','1.0']){
+    const list=(((e.versions||{})[v]||{}).manuals)||e.manuals||[];
+    n+=list.length*3;
+  }
+}
+console.log(n);
+" 2>/dev/null || echo 54)
 cnt=$(find output/pdf -name "*.pdf" ! -name "*updated*" ! -name "*tmp*" | wc -l)
-[ "$cnt" -eq 54 ] && ok "54 份齐" || bad "实有 $cnt 份（期望 54）"
+[ "$cnt" -eq "$expected" ] && ok "${expected} 份齐" || bad "实有 $cnt 份（期望 ${expected}）"
 miss=0
 for p in aas admq adc alb amdm adgp aig akm amem; do
   for v in V1.0 V2.0; do

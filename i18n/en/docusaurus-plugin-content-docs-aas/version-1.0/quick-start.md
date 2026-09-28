@@ -48,6 +48,6 @@ http://localhost:6888/console
 Default administrator: `admin`. The initial password is printed to `logs/init.log` on first start.
 
 :::tip Next steps
-- See the [Installation Guide](./installation.md) for production deployment
+- See the [Installation Guide](./installation/index.md) for production deployment
 - See the [Configuration Guide](./configuration.md) for key parameters
 :::
