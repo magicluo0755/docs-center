@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 4
 title: Cluster Networking and Node Join
 ---
 # Cluster Networking and Node Join

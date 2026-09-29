@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 5
 title: 高可用與容災
 ---
 # 高可用與容災

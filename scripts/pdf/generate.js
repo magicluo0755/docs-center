@@ -115,20 +115,14 @@ function readSidebarPosition(filePath) {
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 
-// 展开 docs 源目录 → 有序页面 [{slug, part}]；同名单文件路径优雅退化为单页
-function expandDir(relDir, opts) {
-  const isRoot = !!(opts && opts.isRoot);
-  const inheritedPart = (opts && opts.part) || null;
+// 展开 docs 源目录 → 有序页面 [slug]；同名单文件路径优雅退化为单页
+// （2026-09-29 修订：移除编（Part）层级——子目录仅作为排序容器，不再产生分组）
+function expandDir(relDir) {
   const abs = path.join(docsSourceRoot(PRODUCT, VERSION), relDir);
   if (!fs.existsSync(abs)) {
-    if (fs.existsSync(abs + ".md")) return [{ slug: relDir, part: inheritedPart }];
+    if (fs.existsSync(abs + ".md")) return [relDir];
     throw new Error(`docs dir not found: ${relDir} (${abs})`);
   }
-  const catFile = path.join(abs, "_category_.json");
-  const catMeta = fs.existsSync(catFile)
-    ? JSON.parse(fs.readFileSync(catFile, "utf8"))
-    : {};
-  const ownPart = isRoot ? inheritedPart : catMeta.label || path.basename(relDir);
   const pages = [];
   const subdirs = [];
   for (const d of fs.readdirSync(abs, { withFileTypes: true })) {
@@ -148,14 +142,12 @@ function expandDir(relDir, opts) {
   pages.sort(byPos);
   subdirs.sort(byPos);
   const out = [];
-  if (pages.some((pg) => pg.name === "index.md"))
-    out.push({ slug: relDir, part: ownPart });
+  if (pages.some((pg) => pg.name === "index.md")) out.push(relDir);
   for (const pg of pages) {
     if (pg.name === "index.md") continue;
-    out.push({ slug: `${relDir}/${pg.name.replace(/\.md$/, "")}`, part: ownPart });
+    out.push(`${relDir}/${pg.name.replace(/\.md$/, "")}`);
   }
-  for (const sd of subdirs)
-    out.push(...expandDir(`${relDir}/${sd.name}`, { part: null }));
+  for (const sd of subdirs) out.push(...expandDir(`${relDir}/${sd.name}`));
   return out;
 }
 
@@ -164,10 +156,10 @@ function resolvePlan(entries) {
   for (const e of entries) {
     if (typeof e === "string") {
       const absDir = path.join(docsSourceRoot(PRODUCT, VERSION), e);
-      if (fs.existsSync(absDir)) out.push(...expandDir(e, { isRoot: true }));
-      else out.push({ slug: e, part: null });
+      if (fs.existsSync(absDir)) out.push(...expandDir(e));
+      else out.push(e);
     } else if (e && e.dir) {
-      out.push(...expandDir(e.dir, { isRoot: true }));
+      out.push(...expandDir(e.dir));
     } else {
       throw new Error(`invalid manuals.json entry: ${JSON.stringify(e)}`);
     }
@@ -236,7 +228,7 @@ async function fetchSections() {
   const sections = [];
   let chapterCounter = 0; // 全文档章计数（每个页面一章，多 h1 时顺延）
   for (const item of PLAN) {
-    const doc = item.slug;
+    const doc = item;
     const url = pageUrl(doc);
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
@@ -294,7 +286,6 @@ async function fetchSections() {
     sections.push({
       id: secId,
       title,
-      part: item.part || null,
       chapterPrefix: h1Prefix(chapterCounter),
       anchor: `${secId}-${(body.find("h1").attr("id") || "").split("-").slice(1).join("-")}`,
       h1Id: body.find("h1").attr("id"),
@@ -374,38 +365,10 @@ function noticeHtml() {
 }
 
 // ─── 组装单文档 HTML ────────────────────────────────────────
-// 编（Part）编号保留汉字数字（第一编/第二编…），与阿拉伯数字的章序号形成层级区分
-function zhPartNum(n) {
-  const d = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
-  if (n < 10) return d[n];
-  if (n === 10) return "十";
-  if (n < 20) return "十" + d[n % 10];
-  return d[Math.floor(n / 10)] + "十" + (n % 10 ? d[n % 10] : "");
-}
-function partLabel(n) {
-  return LANG.startsWith("zh") ? `第${zhPartNum(n)}编` : `PART ${ROMAN[n - 1]}.`;
-}
-
 function buildHtml(sections) {
-  // 编（Part）编号：按首次出现顺序；章号全书连续
-  const partNums = new Map();
-  for (const s of sections) {
-    if (s.part && !partNums.has(s.part)) partNums.set(s.part, partNums.size + 1);
-  }
-
-  // 目录：编条目作为分组行，其下章节缩进
-  let lastPart;
   const tocItems = sections
-    .map((s) => {
-      let row = "";
-      if ((s.part || null) !== lastPart) {
-        if (s.part) {
-          row += `
-      <li class="toc-part"><span class="toc-part-label">${partLabel(partNums.get(s.part))}</span><span class="toc-part-title">${s.part}</span></li>`;
-        }
-        lastPart = s.part || null;
-      }
-      row += `
+    .map(
+      (s) => `
       <li class="toc-l1"><a href="#${s.h1Id}"><span class="toc-title">${s.chapterPrefix}${s.title}</span><span class="toc-dots"></span></a>
         ${
           s.subs.length
@@ -414,29 +377,12 @@ function buildHtml(sections) {
                 .join("")}</ul>`
             : ""
         }
-      </li>`;
-      return row;
-    })
+      </li>`
+    )
     .join("");
 
-  // 正文：每编首个章节前插入编分隔页（div 不进书签树）
-  lastPart = undefined;
   const body = sections
-    .map((s) => {
-      let html = "";
-      if ((s.part || null) !== lastPart) {
-        if (s.part) {
-          html += `
-  <section class="part-page"><div class="part-page-inner">
-    <div class="part-page-label">${partLabel(partNums.get(s.part))}</div>
-    <div class="part-page-title">${s.part}</div>
-  </div></section>`;
-        }
-        lastPart = s.part || null;
-      }
-      html += `<section class="chapter">${s.html}</section>`;
-      return html;
-    })
+    .map((s) => `<section class="chapter">${s.html}</section>`)
     .join("\n");
 
   return `<!DOCTYPE html>
@@ -525,13 +471,6 @@ function buildHtml(sections) {
   .toc { page: toc; page-break-before: always; page-break-after: always; }
   .toc h1 { border: none; margin-bottom: 1.2em; }
   .toc ul { list-style: none; padding-left: 0; }
-  /* 编（Part）分组行：无页码、不进链接，仅作层级导航 */
-  li.toc-part {
-    margin: 1.1em 0 0.45em; font-size: 11.5pt; font-weight: 700;
-    color: var(--brand); border-bottom: 1px solid #d6def0; padding-bottom: 3px;
-  }
-  .toc-part-label { margin-right: 0.6em; }
-  li.toc-part + li.toc-l1, li.toc-part ~ li.toc-l1 { margin-top: 0.35em; }
   .toc li.toc-l1 { margin: 0.55em 0; font-size: 11pt; font-weight: 700; }
   .toc li.toc-l2 { font-size: 9.5pt; font-weight: 400; margin: 0.28em 0 0.28em 1.6em; }
   /* 目录：标题 ……虚线…… 页码（省略号点串，传统 docx 目录样式） */
@@ -553,13 +492,6 @@ function buildHtml(sections) {
     content: ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .";
   }
   .toc a::after { content: target-counter(attr(href url), page); color: #666; font-weight: 400; }
-
-  /* ── 编（Part）分隔页：独立页、居中大字、无页眉（不进书签树）── */
-  @page part { @top-left { content: none; } @top-center { content: none; } @top-right { content: none; } }
-  .part-page { page: part; page-break-before: always; page-break-after: always; }
-  .part-page-inner { position: absolute; top: 40%; left: 20mm; right: 20mm; text-align: center; }
-  .part-page-label { font-size: 16pt; color: #57606a; margin-bottom: 8mm; }
-  .part-page-title { font-size: 26pt; color: var(--brand); font-weight: 400; }
 
   /* ── 章节 ── */
   .chapter { page-break-before: always; }

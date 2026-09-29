@@ -11,7 +11,7 @@ This guide covers the full production deployment workflow of Apusic Application 
 | Topology | Use Case | Reference |
 |----------|----------|-----------|
 | Standalone | Development, testing, small-scale systems | [Standalone Installation](./standalone.md) |
-| Cluster | Production with HA and DR requirements | [Cluster Installation](./cluster/nodes.md) |
+| Cluster | Production with HA and DR requirements | [Cluster Installation](./cluster-nodes.md) |
 
 ## Reading Path
 

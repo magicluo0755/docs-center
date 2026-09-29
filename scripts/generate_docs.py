@@ -337,7 +337,7 @@ def installation_index_zh(p):
 | 部署形态 | 适用场景 | 参考章节 |
 |---------|---------|---------|
 | 单机部署 | 开发测试环境、小规模业务系统 | [单机安装](./standalone.md) |
-| 集群部署 | 生产环境、高可用与容灾要求 | [集群安装](./cluster/nodes.md) |
+| 集群部署 | 生产环境、高可用与容灾要求 | [集群安装](./cluster-nodes.md) |
 
 ## 阅读路径
 
@@ -410,7 +410,7 @@ cd /opt/apusic/{p['id']}/bin
 
 
 def installation_nodes_zh(p):
-    return fm(1, "集群组网与节点加入") + f"""# 集群组网与节点加入
+    return fm(4, "集群组网与节点加入") + f"""# 集群组网与节点加入
 
 多节点集群部署时，首个节点作为引导节点，其余节点通过加入引导节点完成组网：
 
@@ -431,7 +431,7 @@ def installation_nodes_zh(p):
 
 
 def installation_ha_zh(p):
-    return fm(2, "高可用与容灾") + f"""# 高可用与容灾
+    return fm(5, "高可用与容灾") + f"""# 高可用与容灾
 
 ## 高可用架构
 
@@ -881,7 +881,7 @@ This guide covers the full production deployment workflow of {p['full_en']} ({p[
 | Topology | Use Case | Reference |
 |----------|----------|-----------|
 | Standalone | Development, testing, small-scale systems | [Standalone Installation](./standalone.md) |
-| Cluster | Production with HA and DR requirements | [Cluster Installation](./cluster/nodes.md) |
+| Cluster | Production with HA and DR requirements | [Cluster Installation](./cluster-nodes.md) |
 
 ## Reading Path
 
@@ -954,7 +954,7 @@ cd /opt/apusic/{p['id']}/bin
 
 
 def installation_nodes_en(p):
-    return fm(1, "Cluster Networking and Node Join") + f"""# Cluster Networking and Node Join
+    return fm(4, "Cluster Networking and Node Join") + f"""# Cluster Networking and Node Join
 
 For multi-node clusters, the first node acts as the seed node; other nodes join the cluster through it:
 
@@ -975,7 +975,7 @@ After joining, confirm all nodes show Online on the console "Cluster Management"
 
 
 def installation_ha_en(p):
-    return fm(2, "High Availability and Disaster Recovery") + f"""# High Availability and Disaster Recovery
+    return fm(5, "High Availability and Disaster Recovery") + f"""# High Availability and Disaster Recovery
 
 ## HA Architecture
 
@@ -1267,24 +1267,22 @@ def navbar_json():
     return json.dumps(items, ensure_ascii=False, indent=2)
 
 
-# AAS 安装指南目录树：4 份落盘位置（当前版 / V1.0 冻结版 / 英文 current / 英文 V1.0）
-# 页面顺序由 frontmatter sidebar_position 决定；cluster 子目录经 _category_.json 成为「编（Part）」
+# AAS 安装指南（扁平结构：4 份落盘位置，页面顺序由 frontmatter sidebar_position 决定）
+# 2026-09-29 修订：移除「编（Part）」层级——不再使用子目录 + _category_.json，全部平铺
 AAS_INSTALL_ZH = {
     "index": installation_index_zh, "prereq": installation_prereq_zh,
     "standalone": installation_standalone_zh,
-    "cluster/nodes": installation_nodes_zh, "cluster/ha": installation_ha_zh,
+    "cluster-nodes": installation_nodes_zh, "high-availability": installation_ha_zh,
 }
 AAS_INSTALL_EN = {
     "index": installation_index_en, "prereq": installation_prereq_en,
     "standalone": installation_standalone_en,
-    "cluster/nodes": installation_nodes_en, "cluster/ha": installation_ha_en,
+    "cluster-nodes": installation_nodes_en, "high-availability": installation_ha_en,
 }
-AAS_CLUSTER_CATEGORY = {"zh": {"label": "集群安装", "position": 4},
-                        "en": {"label": "Cluster Installation", "position": 4}}
 
 
 def write_aas_installation():
-    """写入 AAS 安装指南目录树（4 个落盘位置 × 5 页 + cluster/_category_.json）"""
+    """写入 AAS 安装指南扁平页面集（4 个落盘位置 × 5 页，无编/子目录层级）"""
     n = 0
     for lang, tpl in (("zh", AAS_INSTALL_ZH), ("en", AAS_INSTALL_EN)):
         if lang == "zh":
@@ -1297,10 +1295,10 @@ def write_aas_installation():
             for rel, fn in tpl.items():
                 w(f"{root}/installation/{rel}.md", fn(PRODUCTS[0]))
                 n += 1
-            cat = AAS_CLUSTER_CATEGORY[lang]
-            w(f"{root}/installation/cluster/_category_.json",
-              json.dumps(cat, ensure_ascii=lang == "en", indent=2) + "\n")
-            n += 1
+            # 清理历史「编（Part）」子目录残留（cluster/ 及其 _category_.json）
+            stale_dir = os.path.join(ROOT, root, "installation", "cluster")
+            if os.path.isdir(stale_dir):
+                shutil.rmtree(stale_dir)
     # AAS 扁平 installation.md 已被目录树取代，清理残留
     for stale in ("products/aas/docs/installation.md",
                   "aas_versioned_docs/version-1.0/installation.md",

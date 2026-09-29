@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 4
 title: 集羣組網與節點加入
 ---
 # 集羣組網與節點加入

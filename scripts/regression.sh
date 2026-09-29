@@ -72,6 +72,11 @@ for p in aas admq adc alb amdm adgp aig akm amem; do
 done
 [ "$miss" -eq 0 ] && ok "矩阵无缺口"
 
+# ── 3b. 兜底稿检测：-updated.pdf 残留说明主文件被占用未替换（矩阵不一致）──
+stale=$(find output/pdf -name "*-updated*.pdf" | wc -l)
+[ "$stale" -eq 0 ] && ok "无 -updated 兜底残留" \
+  || bad "存在 $stale 份 -updated 兜底稿：请关闭 PDF 预览/阅读器后重跑该语言出稿并替换主文件"
+
 # ── 4. 搜索 E2E（三语言）─────────────────────────────────────
 step "搜索 E2E"
 node scripts/verify_search.js "$BASE_URL/aas/intro" "集群" reg-zh >/dev/null 2>&1 \
