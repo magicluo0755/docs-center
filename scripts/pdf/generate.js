@@ -218,25 +218,17 @@ function pageUrl(doc) {
   return BASE + seg.join("") + "/" + doc;
 }
 
-// ─── 章节序号（需求 4.10：PDF 章节编号）─────────────────────
-// 中文一级标题：「第一章 标题」（全章名与标题间一个空格）
-// 英文一级标题：「CHAPTER 1.标题」（序号与标题间无空格，按用户指定；如需 Red Hat 标准空格，改 CHAPTER_SEP 为 " "）
-// 子标题（中英一致）：「2.1.」「2.3.1.」层级小数序号，序号后直接接标题、无分隔符
-const CHAPTER_SEP_EN = "";
-function zhChapterNum(n) {
-  const d = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
-  if (n < 10) return d[n];
-  if (n === 10) return "十";
-  if (n < 20) return "十" + d[n % 10];
-  return d[Math.floor(n / 10)] + "十" + (n % 10 ? d[n % 10] : "");
-}
+// ─── 章节序号（需求 4.10；2026-09-29 修订：阿拉伯数字 + 序号后空格）──
+// 中文一级标题：「第1章 标题」（阿拉伯数字，序号与标题间一个空格）
+// 英文一级标题：「CHAPTER 1. Title」（数字后带句点，句点后一个空格）
+// 子标题（中英一致）：「1.1.」「1.1.2.」层级小数序号，序号后一个空格再接标题
 function h1Prefix(n) {
   return LANG.startsWith("zh")
-    ? `第${zhChapterNum(n)}章 `
-    : `CHAPTER ${n}.${CHAPTER_SEP_EN}`;
+    ? `第${n}章 `
+    : `CHAPTER ${n}. `;
 }
 function subPrefix(chap, h2, h3) {
-  return h3 === undefined ? `${chap}.${h2}.` : `${chap}.${h2}.${h3}.`;
+  return h3 === undefined ? `${chap}.${h2}. ` : `${chap}.${h2}.${h3}. `;
 }
 
 // ─── 抓取并聚合各文档页面 ───────────────────────────────────
@@ -382,8 +374,16 @@ function noticeHtml() {
 }
 
 // ─── 组装单文档 HTML ────────────────────────────────────────
+// 编（Part）编号保留汉字数字（第一编/第二编…），与阿拉伯数字的章序号形成层级区分
+function zhPartNum(n) {
+  const d = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+  if (n < 10) return d[n];
+  if (n === 10) return "十";
+  if (n < 20) return "十" + d[n % 10];
+  return d[Math.floor(n / 10)] + "十" + (n % 10 ? d[n % 10] : "");
+}
 function partLabel(n) {
-  return LANG.startsWith("zh") ? `第${zhChapterNum(n)}编` : `PART ${ROMAN[n - 1]}.`;
+  return LANG.startsWith("zh") ? `第${zhPartNum(n)}编` : `PART ${ROMAN[n - 1]}.`;
 }
 
 function buildHtml(sections) {
@@ -450,7 +450,8 @@ function buildHtml(sections) {
     font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
     font-size: 10.5pt; line-height: 1.75; color: #1c1e21; margin: 0;
   }
-  h1 { font-size: 20pt; color: var(--brand); border-bottom: 2px solid var(--brand); padding-bottom: 6px; }
+  /* 一级标题：品牌色，无下划线（2026-09-29 修订：去 border-bottom，避免与页眉横线视觉重复） */
+  h1 { font-size: 20pt; color: var(--brand); }
   h2 { font-size: 14pt; color: #222; margin-top: 1.6em; }
   h3 { font-size: 12pt; }
   table { border-collapse: collapse; width: 100%; margin: 0.8em 0; font-size: 9.5pt; }
