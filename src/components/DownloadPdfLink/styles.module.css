@@ -1,0 +1,13 @@
+/* 与原生「编辑此页」保持同样的视觉规格：图标 + 文字、链接色、行内对齐 */
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ifm-link-color);
+  white-space: nowrap;
+}
+
+.link:hover {
+  color: var(--ifm-link-hover-color);
+  text-decoration: underline;
+}

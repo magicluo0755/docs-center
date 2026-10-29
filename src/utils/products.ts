@@ -74,3 +74,30 @@ export function resolveProductContext(
     rest.startsWith('/1.0/') || rest === '/1.0' ? 'V1.0' : 'V2.0';
   return {product, versionLabel};
 }
+
+/**
+ * 解析当前文档路由：产品 + 版本 + 页面 slug。
+ * slug 是相对产品根、去掉版本段后的路径（无前导斜杠），
+ * 与 scripts/pdf/manuals.json 中 docs 条目的写法一致：
+ *   /aas/installation/standalone → installation/standalone
+ *   /aas/1.0/intro               → intro
+ *   /aas/                        → ''
+ */
+export function resolveDocRoute(
+  pathname: string,
+): {product: ProductInfo; versionLabel: string; slug: string} | null {
+  const ctx = resolveProductContext(pathname);
+  if (!ctx) {
+    return null;
+  }
+  const stripped = pathname.replace(/^\/(en|zh-Hans|zh-Hant)(\/|$)/, '/');
+  let rest = stripped.slice(ctx.product.id.length + 1); // '' 或 '/...'
+  if (rest === '/1.0' || rest.startsWith('/1.0/')) {
+    rest = rest.slice('/1.0'.length);
+  }
+  return {
+    product: ctx.product,
+    versionLabel: ctx.versionLabel,
+    slug: rest.replace(/^\/+|\/+$/g, ''),
+  };
+}

@@ -54,7 +54,9 @@ docs-center/
 
 ```bash
 npm install          # 安装依赖
-npm run start        # 本地开发（http://localhost:3000）
+npm run start        # 本地开发（http://localhost:3000，只编译简体中文）
+npm run start:en     # 开发态预览英文（只编译英文，切语言仍会 404，见下方注意）
+npm run start:hant   # 开发态预览繁体（同上）
 npm run build        # 生产构建（中文 + 英文全量）
 npm run serve:static # 预览构建产物（生产形态静态服务器，推荐）
 npm run verify       # 一键回归：54 路由 + 3 语言搜索 E2E + 搜索索引 + PDF 库存
@@ -67,6 +69,8 @@ npm run clear        # 清理构建缓存
 ```
 
 > 注意：在本沙箱环境执行 `build` / `serve` 需带 `CODEBUDDY_SAFE_DELETE_ENABLED=0`（WorkBuddy 批量删除保护会拦截 Docusaurus 清理 `build/__server`）；公司 CI 环境无需此变量。
+>
+> 注意：`docusaurus start` **一次只编译一种语言**（默认简体中文），在开发态点语言下拉切到 English / 繁體會进入 404 页，这是框架的既定行为，不是路由缺陷。要验证语言切换，请 `npm run build` 后用 `npm run serve:static` 预览（生产产物含三个语言），或 `npm run start -- --locale en` 单独开发某个语言（见技术文档 §10.7）。
 
 ## PDF 出稿管线
 

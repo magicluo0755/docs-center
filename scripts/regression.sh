@@ -11,14 +11,17 @@ bad()  { echo "  FAIL: $1"; FAIL=$((FAIL+1)); }
 
 # 固定走 127.0.0.1：localhost 在双栈环境可能解析到 ::1，
 # 撞上手工启动的 docusaurus serve（已知版本化首页 404 缺陷）造成假失败。
+# 端口独立于开发/预览常用端口（3000 开发、3200 演示），避免误测到
+# 只编译单一语言的 dev 服务器（见技术文档 §10.7）。
 # 可用 BASE_URL 覆盖（如 BASE_URL=http://127.0.0.1:3100 npm run verify）。
-BASE_URL="${BASE_URL:-http://127.0.0.1:3000}"
+VERIFY_PORT="${VERIFY_PORT:-3210}"
+BASE_URL="${BASE_URL:-http://127.0.0.1:$VERIFY_PORT}"
 
 # ── 0. 站点可用性（未启动则拉起静态预览）─────────────────────
 step "站点可用性"
 if ! curl -sf -o NUL "$BASE_URL/"; then
   echo "  预览服务未启动，拉起 serve:static ..."
-  node scripts/serve-static.js 3000 &
+  node scripts/serve-static.js "$VERIFY_PORT" &
   SERVE_PID=$!
   sleep 2
 fi
@@ -76,6 +79,93 @@ done
 stale=$(find output/pdf -name "*-updated*.pdf" | wc -l)
 [ "$stale" -eq 0 ] && ok "无 -updated 兜底残留" \
   || bad "存在 $stale 份 -updated 兜底稿：请关闭 PDF 预览/阅读器后重跑该语言出稿并替换主文件"
+
+# ── 3c. 页脚动作行：编辑此页 / 下载 PDF ─────────────────────
+step "页脚动作行"
+if [ -d build/downloads/pdf ]; then
+  ok "PDF 静态目录已随构建产出（$(find build/downloads/pdf -name '*.pdf' | wc -l) 份）"
+else
+  bad "缺 build/downloads/pdf：检查 npm run prepare:assets 是否执行"
+fi
+
+# PDF 路径本身含语言目录，baseUrl 若再带 locale 会出现 /en/downloads/pdf 错链
+leak=$(grep -rl 'href="/en/downloads/pdf\|href="/zh-Hant/downloads/pdf' build --include=index.html 2>/dev/null | wc -l)
+[ "$leak" -eq 0 ] && ok "PDF 链接无 locale 前缀污染" || bad "$leak 个页面的 PDF 链接带 locale 前缀"
+
+check_action() {
+  local url="$1" want_pdf="$2" want_src="$3"
+  local f="build${url%/}/index.html"
+  if [ ! -f "$f" ]; then bad "$url 页面不存在"; return; fi
+  local got_pdf got_src
+  got_pdf=$(grep -ao 'data-pdf-file="[^"]*"' "$f" | head -1 | sed 's/.*="//;s/"$//')
+  got_src=$(grep -ao 'https://github.com/magicluo0755/docs-center/edit/main/[^"]*' "$f" | head -1 | sed 's#.*/edit/main/##')
+  [ "$got_pdf" = "$want_pdf" ] && ok "$url → PDF $got_pdf" \
+    || bad "$url PDF 期望 $want_pdf，实得 '${got_pdf:-无}'"
+  [ "$got_src" = "$want_src" ] && ok "$url → MD $got_src" \
+    || bad "$url MD 期望 $want_src，实得 '${got_src:-无}'"
+}
+
+# 唯一命中分册 → 下该分册
+check_action "/aas/installation/standalone" \
+  "aas-V2.0-zh-Hans-installation-guide.pdf" \
+  "products/aas/docs/installation/standalone.md"
+# 翻译版：PDF 走 en 目录，源文件指向 i18n 镜像
+check_action "/en/aas/installation/standalone" \
+  "aas-V2.0-en-installation-guide.pdf" \
+  "i18n/en/docusaurus-plugin-content-docs-aas/current/installation/standalone.md"
+# intro 被 3 本手册同时收录（歧义）→ 回退全量合集
+check_action "/aas/intro" \
+  "aas-V2.0-zh-Hans.pdf" \
+  "products/aas/docs/intro.md"
+# 冻结版本：PDF 走 V1.0，源文件指向站点根的版本目录
+check_action "/aas/1.0/intro" \
+  "aas-V1.0-zh-Hans.pdf" \
+  "aas_versioned_docs/version-1.0/intro.md"
+# 无分册的产品：直接给全量
+check_action "/adc/intro" \
+  "adc-V2.0-zh-Hans.pdf" \
+  "products/adc/docs/intro.md"
+
+# 非文档页不应出现动作项
+if grep -q 'data-pdf-file=\|/edit/main/' build/index.html 2>/dev/null; then
+  bad "首页不应显示下载/编辑入口"
+else
+  ok "首页无动作入口"
+fi
+
+# 全站：动作组必须在标题行内、链接全部有效（含 locale 前缀与文件存在性）
+if node scripts/verify_doc_actions.js build >/tmp/doc-actions.log 2>&1; then
+  ok "$(tr '\n' ' ' </tmp/doc-actions.log | sed 's/  */ /g')"
+else
+  bad "页脚动作行校验失败：$(tr '\n' ' ' </tmp/doc-actions.log | head -c 300)"
+fi
+
+# ── 3d. 侧边栏整体收起/展开（原生 themeConfig.docs.sidebar.hideable）──
+step "侧边栏收纳"
+check_collapse() {
+  local url="$1" want="$2"
+  local f="build${url%/}/index.html"
+  if [ ! -f "$f" ]; then bad "$url 页面不存在"; return; fi
+  grep -q 'collapseSidebarButton' "$f" \
+    && ok "$url 有收起按钮" || bad "$url 缺收起按钮：检查 themeConfig.docs.sidebar.hideable"
+  grep -q "title=\"$want\"" "$f" \
+    && ok "$url 提示文案「$want」" || bad "$url 提示文案非「$want」"
+}
+check_collapse "/aas/intro" "收起侧边栏"
+check_collapse "/zh-Hant/aas/intro" "收起側邊欄"
+check_collapse "/en/aas/intro" "Collapse sidebar"
+
+# 非文档页无侧边栏，不应出现该按钮
+grep -q 'collapseSidebarButton' build/index.html 2>/dev/null \
+  && bad "首页不应出现收起按钮" || ok "首页无收起按钮"
+
+# ── 3e. 三语言互跳链路（语言下拉切换后不能 404）────────────────
+step "语言切换链路"
+if node scripts/verify_locale_links.js build >/tmp/locale-links.log 2>&1; then
+  ok "$(tr '\n' ' ' </tmp/locale-links.log | sed 's/  */ /g')"
+else
+  bad "语言切换链路校验失败：$(tr '\n' ' ' </tmp/locale-links.log | head -c 300)"
+fi
 
 # ── 4. 搜索 E2E（三语言）─────────────────────────────────────
 step "搜索 E2E"

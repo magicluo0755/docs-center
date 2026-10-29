@@ -4,10 +4,16 @@ const fs = require("fs");
 const path = require("path");
 const puppeteer = require("puppeteer-core");
 
-const EDGE_PATHS = [
+const BROWSER_PATHS = [
+  // BROWSER_PATH 优先（与 scripts/pdf/generate.js 一致）：Edge 无法无头启动时
+  // 可直接指向 Chrome/chromium，见技术文档 §10.6
+  process.env.BROWSER_PATH,
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
   "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-];
+  "/usr/bin/chromium",
+  "/usr/bin/google-chrome",
+].filter(Boolean);
 
 (async () => {
   const [url, query, tag] = process.argv.slice(2);
@@ -15,7 +21,7 @@ const EDGE_PATHS = [
     console.error("usage: node verify_search.js <url> <query> [tag]");
     process.exit(1);
   }
-  const executablePath = EDGE_PATHS.find((p) => fs.existsSync(p));
+  const executablePath = BROWSER_PATHS.find((p) => fs.existsSync(p));
   const browser = await puppeteer.launch({
     executablePath,
     headless: "new",

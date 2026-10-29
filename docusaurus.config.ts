@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import type {Config} from '@docusaurus/types';
 
 // ─── 产品清单（3 条产品线 · 9 个产品，每产品一个 docs 实例）──────────────
@@ -23,6 +25,44 @@ const byLine = (line: string) =>
     .filter((p) => p.line === line)
     .map((p) => ({label: p.label, to: `/${p.id}/intro`}));
 
+// 文档页的「编辑此页」用 Docusaurus 原生能力：各 docs 实例配置 editUrl，
+// 页脚由主题自带的 EditThisPage 渲染（i18n 文案内置：编辑此页 / 編輯此頁）。
+// 用函数形式而不是字符串，因为本项目是多实例 + 冻结版 + i18n 三套目录：
+// versionDocsDirPath 是文档源目录（products/<p>/docs 或 <p>_versioned_docs/version-x），
+// docPath 是目录内的相对路径；翻译页要改的是 i18n 下的同构文件，缺翻译才回落到源文件。
+const EDIT_BASE = 'https://github.com/magicluo0755/docs-center/edit/main';
+
+function editUrl({
+  versionDocsDirPath,
+  docPath,
+  locale,
+}: {
+  versionDocsDirPath: string;
+  docPath: string;
+  locale: string;
+}): string {
+  const candidates: string[] = [];
+  if (locale !== 'zh-Hans') {
+    // products/aas/docs              → 插件 aas、版本目录 current
+    // aas_versioned_docs/version-1.0 → 插件 aas、版本目录 version-1.0
+    const current = /^products\/([^/]+)\/docs$/.exec(versionDocsDirPath);
+    const versioned = /^([^/]+)_versioned_docs\/(.+)$/.exec(versionDocsDirPath);
+    const pluginId = current?.[1] ?? versioned?.[1];
+    const versionDir = current ? 'current' : versioned?.[2];
+    if (pluginId && versionDir) {
+      candidates.push(
+        `i18n/${locale}/docusaurus-plugin-content-docs-${pluginId}/${versionDir}/${docPath}`,
+      );
+    }
+  }
+  candidates.push(`${versionDocsDirPath}/${docPath}`);
+  // 翻译缺失时回落到简体源文件（页面上回退显示的正是它，改它才对）
+  const target =
+    candidates.find((p) => fs.existsSync(path.join(__dirname, p))) ??
+    candidates[candidates.length - 1];
+  return `${EDIT_BASE}/${target}`;
+}
+
 // 每个产品挂载一个独立的 docs 插件实例：
 // 独立路由前缀 / 独立 sidebar / 独立版本集（当前 V2.0 + 冻结版 V1.0）
 const docPlugins: any = products.map((p) => [
@@ -32,6 +72,7 @@ const docPlugins: any = products.map((p) => [
     path: `products/${p.id}/docs`,
     routeBasePath: p.id,
     sidebarPath: require.resolve(`./products/${p.id}/sidebars.ts`),
+    editUrl,
     versions: {
       current: {label: 'V2.0', path: '', banner: 'none'},
       '1.0': {label: 'V1.0', path: '1.0', banner: 'none'},
@@ -102,6 +143,14 @@ const config: Config = {
   themeConfig: {
     colorMode: {
       defaultMode: 'light',
+    },
+    // 桌面端文档侧边栏可整体收起/展开，便于专注阅读正文（Docusaurus 原生能力）：
+    // 主题负责渲染「收起侧边栏」按钮 + 收起后的悬浮「展开侧边栏」箭头，
+    // 文案与图标均为内置（三语齐备）。移动端不受影响，仍走原生抽屉。
+    docs: {
+      sidebar: {
+        hideable: true,
+      },
     },
     navbar: {
       title: '文档中心',

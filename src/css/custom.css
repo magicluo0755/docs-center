@@ -90,15 +90,18 @@
   list-style: none;
 }
 
+/* 选中的版本号与「版本：」label 视觉一致：不加粗、同字号、同颜色
+   （label 见 .sph-version-label：0.88rem / 400 / emphasis-700） */
 .sidebar-product-header .navbar__link {
   padding: 0.3rem 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ifm-color-primary);
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--ifm-color-emphasis-700);
 }
 
+/* 下拉小三角跟随文字颜色，避免仍残留品牌蓝 */
 .sidebar-product-header .navbar__link::after {
-  border-color: var(--ifm-color-primary) transparent;
+  border-color: currentColor transparent;
 }
 
 .sidebar-product-header .dropdown__menu {

@@ -4,3 +4,8 @@ build/
 *.log
 .DS_Store
 output/
+
+# PDF 出稿产物同步进静态目录（由 npm run prepare:assets 生成，不入库）
+static/downloads/
+# 由 output/pdf 扫描生成的 PDF 清单（构建期生成，避免与产物不同步）
+src/data/pdf-manifest.json
